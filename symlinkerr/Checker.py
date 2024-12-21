@@ -54,6 +54,7 @@ class Checker:
         return True
 
     def can_be_replaced_with(self, original_file, replacement_file):
+        # Check that the destination is not excluded
         for exclusion in self.exclude_target_directories:
             if exclusion.match(replacement_file.filepath):
                 self.logger.debug(
@@ -61,12 +62,18 @@ class Checker:
                 )
                 return False
 
+        # Check the file hashes
+        if self.check_hash:
+            original_file_hash = self.get_hash(original_file)
+            replacement_file_hash = self.get_hash(replacement_file)
+            pass
+
         return True
 
     def get_hash(self, file):
         cursor = self.database.execute(
             "SELECT hash FROM hashes WHERE fullpath=? AND size=? AND mtime=?",
-            (file.filepath, file.get_size(), file.get_mtime())
+            (file.filepath, file.get_size(), file.get_mtime(), )
         )
         hash_in_cache = cursor.fetchone()
         print(f"hash_in_cache = {hash_in_cache}")
