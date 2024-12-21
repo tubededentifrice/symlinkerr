@@ -1,0 +1,53 @@
+# This database will store the index of the files, what has been done, etc.
+# And is very useful if we want to revert what has been done, and only what has been done.
+database: "/config/symlinkerr.sqlite"
+
+watcher:
+  # How often to check for new files and replace them
+  interval-seconds: 86400
+
+  # How often should be recheck files for which we failed to find a match
+  # 0 to disable. Use "reset-failures" action so they will be checked again on the next check.
+  recheck-failures-interval-seconds: 0
+
+indexer:
+  # Follow symlinks in the symlink-target-directories
+  followlinks: false
+
+finder:
+  # Follow symlinks in the watch-directories
+  followlinks: false
+
+  # Do not try to replace files too early, as they might still be processing
+  files-min-age-seconds: 3600
+
+  # Do not try to replace small files
+  files-min-size-bytes: 52428800
+
+checker:
+  check-filesize: true
+  check-hash: true
+  check-filename: false
+  # Files and folders that shouldn't be visible to the indexer
+  # All exclusions are evaluated on the full absolute path of the file
+  exclusions:
+    watch-directories-regexes: []
+    symlink-target-directories-regexes: []
+
+replacer:
+  # Dry run will only log what it would have done, but won't do anything
+  dry-run: true
+
+directories:
+  # Directories where we will delete files
+  watch-directories:
+    - dir: "/data/media/movies/The Aviator (2004) [imdb-tt0338751]"
+
+  # Directories where we will try to find replacements
+  # Only files with the exact same size will be eligible.
+  # After finding a candidate, the hash of both files will be computed to ensure they are indeed identical (and accessible!)
+  # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
+  # If there is still multiple matching candidates, a random one will be chosen
+  symlink-target-directories:
+    - dir: "/mnt/remotes/zurg/movies"
+      priority: 1
