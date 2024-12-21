@@ -84,6 +84,6 @@ class Indexer:
     def is_file_within_target_directories(self, fullpath):
         # Actually, both directory and fullpath might not be absolute, and it's fine as long as it's consistent
         for directory in self.target_directories:
-            if fullpath.startswith(directory):
+            if fullpath.startswith(directory["dir"]):
                 return True
         return False

@@ -5,6 +5,7 @@ class File:
     __filename = None
     __mtime = None
     __size = None
+    __readlink = None
 
     def __init__(self, fullpath):
         self.fullpath = fullpath
@@ -23,3 +24,8 @@ class File:
         if self.__size is None:
             self.__size = os.path.getsize(self.fullpath)
         return self.__size
+
+    def get_readlink(self):
+        if self.__readlink is None:
+            self.__readlink = os.readlink(self.fullpath)
+        return self.__readlink

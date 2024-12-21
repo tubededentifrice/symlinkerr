@@ -6,7 +6,8 @@ finder:
   find-candidates-by: "SIZE"
 
   directories:
-    watch-directories: []
+    watch-directories:
+      - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
 
     symlink-target-directories:
       - dir: "/mnt/remotes/rclone/zurg/__downloads__"
@@ -14,14 +15,12 @@ finder:
       - dir: "/mnt/remotes/rclone/zurg/__all__"
         priority: 2
 
-    undo-all-symlinks-directories:
-      - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+    undo-all-symlinks-directories: []
+      # - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
 
 checker:
+  files-min-age-seconds: 0
   change-in-mtime-invalidates-hash: false
 
 replacer:
   dry-run: false
-
-  add-suffix-instead-of-deleting: true
-  suffix: ".bak"

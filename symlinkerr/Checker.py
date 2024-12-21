@@ -29,6 +29,10 @@ class Checker:
             re.compile(r)
             for r in config["exclusions"]["symlink-target-directories-regexes"]
         ]
+        self.exclude_undo_symlinks_directories = [
+            re.compile(r)
+            for r in config["exclusions"]["undo-all-symlinks-directories-regexes"]
+        ]
 
         self.create_hashes_table()
 
@@ -58,7 +62,7 @@ class Checker:
             return False
 
         # Check if the age matches the criteroa
-        file_age = time.time() - file.get_mtime()
+        file_age = round(time.time() - file.get_mtime())
         if file_age < self.min_age:
             self.logger.debug(
                 f"Ignoring file with size {file.get_size()}, file_age {file_age} seconds: {file.fullpath} as it's been modified recently (threshold: {self.min_age} seconds)"
@@ -67,7 +71,7 @@ class Checker:
 
         # Check that the file is not excluded
         for exclusion in self.exclude_watch_directories:
-            if exclusion.match(file.filepath):
+            if exclusion.match(file.fullpath):
                 self.logger.debug(
                     f"Ignoring file {file.fullpath}, matching exclusion regex '{exclusion.pattern}'"
                 )
@@ -78,7 +82,7 @@ class Checker:
     def can_be_replaced_with(self, original_file, replacement_file):
         # Check that the destination is not excluded
         for exclusion in self.exclude_target_directories:
-            if exclusion.match(replacement_file.filepath):
+            if exclusion.match(replacement_file.fullpath):
                 self.logger.debug(
                     f"Replacement file {replacement_file.fullpath} matching exclusion regex '{exclusion.pattern}'"
                 )
@@ -100,6 +104,16 @@ class Checker:
                 )
                 return False
 
+        return True
+
+    def is_eligible_for_content_replacement(self, symlink_file):
+        for exclusion in self.exclude_undo_symlinks_directories:
+            if exclusion.match(symlink_file.fullpath):
+                self.logger.debug(
+                    f"Symlink {symlink_file} matching exclusion regex '{exclusion.pattern}'"
+                )
+                return False
+        
         return True
 
     def get_hash(self, file):

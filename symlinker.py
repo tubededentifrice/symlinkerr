@@ -91,7 +91,9 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             with open(config_arg_file, "r") as config_file:
                 config = merge(yaml.safe_load(config_file), config)
         elif config_arg_file == "config.yml":
-            logger.info(f"Configuration not found, creating a base one: {config_arg_file}")
+            logger.info(
+                f"Configuration not found, creating a base one: {config_arg_file}"
+            )
             shutil.copy(config_default_file, config_arg_file)
         else:
             raise Exception(
@@ -105,7 +107,9 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         with sqlite3.connect(config["database"]) as database:
             indexer = Indexer(
                 config=config["indexer"],
-                target_directories=config["finder"]["directories"]["symlink-target-directories"],
+                target_directories=config["finder"]["directories"][
+                    "symlink-target-directories"
+                ],
                 database=database,
                 min_size=config["checker"]["files-min-size-bytes"],
             )
@@ -116,6 +120,7 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             replacer = Replacer(
                 config=config["replacer"],
                 database=database,
+                interactive=args.interactive,
             )
             finder = Finder(
                 config=config["finder"],
@@ -125,12 +130,16 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
                 replacer=replacer,
             )
 
-            if args.action in ["watch", "replace-with-symlinks", "replace-with-content"]:
+            if args.action in [
+                "watch",
+                "replace-with-symlinks",
+                "replace-with-content",
+            ]:
                 indexer.index_target_directories()
-            
+
             if args.action in ["watch", "replace-with-symlinks"]:
                 finder.find_and_replace_with_symlinks()
-            
+
             if args.action in ["watch", "replace-with-content"]:
                 finder.find_and_replace_with_content()
 
@@ -143,7 +152,7 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             if args.action in ["watch"]:
                 # Sleep so that the total time is interval-seconds
                 interval_duration = config["watcher"]["interval-seconds"]
-                run_duration = (round(time.time()) - start_time)
+                run_duration = round(time.time()) - start_time
                 sleep_duration = interval_duration - run_duration
                 if sleep_duration <= 0:
                     sleep_duration = interval_duration

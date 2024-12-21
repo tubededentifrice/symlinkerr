@@ -27,8 +27,9 @@ finder:
 
   directories:
     # Directories where we will delete files and replace them with symlinks
-    watch-directories:  # movies and movies-tmp
-      - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+    watch-directories:
+      - dir: "/data/media/movies-tmp"
+      # - dir: "/data/media/movies"
 
     # Directories where we will try to find replacements
     # Only files with the exact same size will be eligible.
@@ -45,7 +46,9 @@ finder:
     # Symlinks in this folder will be replaced by the content at the target of the symlink
     # Eg. this is the things you actually want to store locally, if you are happy with the content
     # Must obviously NOT be with the watch-directories, otherwise it will replace with a symlink, then replace that symlink with content, etc.
-    undo-all-symlinks-directories: []  # /data/media/movies-backupthis and tv-backupthis
+    undo-all-symlinks-directories: []
+      # - dir: "/data/media/movies-backupthis"
+      # - dir: "/data/media/tv-backupthis"
 
 
 checker:
@@ -63,20 +66,21 @@ checker:
   change-in-mtime-invalidates-hash: true
 
   # Files and folders that shouldn't be visible to the indexer
-  # All exclusions are evaluated on the full absolute path of the file
+  # All exclusions are evaluated against the full absolute path of the file
   exclusions:
     watch-directories-regexes: []
     symlink-target-directories-regexes: []
     undo-all-symlinks-directories-regexes: []
 
 replacer:
-  # Dry run will only log what it would have done, but won't do anything
+  # Dry run will only log what it would have done, but won't do anything.
+  # It will populate the hash cache though, so the next runs will be very fast.
   dry-run: true
 
   # Instead of deleting the original file, will rename it with the given suffix
   # This is not atomic, so can theoretically lead to orphans (file renamed, but the symlink has not been moved to take its spot yet)
   # but the simlink will be created first, with a .tmp extension
-  add-suffix-instead-of-deleting: true
+  add-suffix-instead-of-deleting: false
 
   # To avoid infinite loop, files with this suffix will be ignored
   suffix: ".bak"

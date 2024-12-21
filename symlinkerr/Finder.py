@@ -62,7 +62,7 @@ class Finder:
                                 break # Do not evaluate other candidates
 
     def find_and_replace_with_content(self):
-        for directory in self.watch_directories:
+        for directory in self.undo_directories:
             self.logger.info(f"Finding files to replace with content in directory {directory}")
             self.find_and_replace_with_content_in_directory(directory["dir"])
 
@@ -72,8 +72,11 @@ class Finder:
                 fullpath = os.path.join(root, filename)
                 # We are only interested in symlinks over here!
                 if os.path.islink(fullpath):
-                    link_target = os.readlink(fullpath)
+                    symlink_file = File(fullpath)
+                    link_target = symlink_file.get_readlink()
                     if not self.only_undo_symlinks_to_target_directories or self.indexer.is_file_within_target_directories(link_target):
-                        self.logger.info(f"Found a simlink to unwind: {fullpath}")
+                        if self.checker.is_eligible_for_content_replacement(symlink_file):
+                            self.logger.info(f"Found a simlink to unwind: {fullpath} which links to {link_target}")
+                            self.replacer.replace_with_content(symlink_file)
 
                     
