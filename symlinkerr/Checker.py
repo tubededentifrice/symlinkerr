@@ -7,6 +7,7 @@ import time
 Perform the replacement checks
 """
 
+
 class Checker:
     logger = logging.getLogger("Checker")
 
@@ -17,6 +18,10 @@ class Checker:
         self.min_size = self.config["files-min-size-bytes"]
         self.min_age = self.config["files-min-age-seconds"]
         self.check_hash = config["check-hash"]
+        self.change_in_mtime_invalidates_hash = config[
+            "change-in-mtime-invalidates-hash"
+        ]
+
         self.exclude_watch_directories = [
             re.compile(r) for r in config["exclusions"]["watch-directories-regexes"]
         ]
@@ -43,7 +48,7 @@ class Checker:
         self.database.commit()
 
     def is_eligible_for_replacement(self, file):
-        # Do the fastest check first
+        # Do the fastest checks first
 
         # Check if the size matches the criteria
         if file.get_size() < self.min_size:
@@ -99,10 +104,12 @@ class Checker:
 
     def get_hash(self, file):
         # Check if the hash is in the cache
-        cursor = self.database.execute(
-            f"SELECT hash FROM hashes WHERE fullpath=? AND size={file.get_size()} AND mtime={file.get_mtime()}",
-            (file.fullpath,),
-        )
+
+        query = f"SELECT hash FROM hashes WHERE fullpath=? AND size={file.get_size()}"
+        if self.change_in_mtime_invalidates_hash:
+            query += f" AND mtime={file.get_mtime()}"
+
+        cursor = self.database.execute(query, (file.fullpath,))
 
         hash_in_cache = cursor.fetchone()
         if hash_in_cache is not None:

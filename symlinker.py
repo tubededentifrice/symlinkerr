@@ -7,6 +7,7 @@ import os
 import pprint
 import shutil
 import sqlite3
+import time
 
 import yaml
 
@@ -45,17 +46,23 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         help="Config file (default: %(default)s)",
     )
     parser.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        help="Confirm all replacements before performing them",
+    )
+    parser.add_argument(
         "action",
         default="watch",
         const="watch",
         nargs="?",
         choices=[
-            "replace",
+            "replace-with-symlinks",
+            "replace-with-content",
             "watch",
             "undo",
-            "undo-all-symlinks",
-            "reset-failures",
-            "reset-hashes",
+            "clear-changelog",
+            "clear-hashes",
         ],
         help="Action to perform (default: %(default)s)",
     )
@@ -71,61 +78,80 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
     logger.info(f"Running with parameters: {vars(args)}")
 
     config_default_file = "config_default.yml"
+    config_arg_file = args.config
     with open(config_default_file, "r") as config_file:
         config = yaml.safe_load(config_file)
 
-    # Create configuration file if it doesn't exist
-    config_arg_file = args.config
-    if os.path.isfile(config_arg_file):
-        with open(config_arg_file, "r") as config_file:
-            config = merge(yaml.safe_load(config_file), config)
-    elif config_arg_file == "config.yml":
-        logger.info(f"Configuration not found, creating a base one: {config_arg_file}")
-        shutil.copy(config_default_file, config_arg_file)
-    else:
-        raise Exception(
-            f"Config file {config_arg_file} not found; since this is potentially destructive, refusing to run. Create that file and try again."
-        )
-        exit(1)
+    while True:
+        start_time = round(time.time())
 
-    logger.info(f"Configuration: {pprint.pformat(config)}")
-    logging.getLogger().setLevel(config["logger"]["level"])
+        # Always reload the config when we loop, in case it changed on disk
+        # Create configuration file if it doesn't exist
+        if os.path.isfile(config_arg_file):
+            with open(config_arg_file, "r") as config_file:
+                config = merge(yaml.safe_load(config_file), config)
+        elif config_arg_file == "config.yml":
+            logger.info(f"Configuration not found, creating a base one: {config_arg_file}")
+            shutil.copy(config_default_file, config_arg_file)
+        else:
+            raise Exception(
+                f"Config file {config_arg_file} not found; since this is potentially destructive, refusing to run. Create that file and try again."
+            )
+            exit(1)
 
-    with sqlite3.connect(config["database"]) as database:
-        indexer = Indexer(
-            config=config["indexer"],
-            target_directories=config["directories"]["symlink-target-directories"],
-            database=database,
-            min_size=config["checker"]["files-min-size-bytes"],
-        )
-        checker = Checker(
-            config=config["checker"],
-            database=database,
-        )
-        replacer = Replacer(
-            config=config["replacer"],
-            database=database,
-        )
-        finder = Finder(
-            config=config["finder"],
-            watch_directories=config["directories"]["watch-directories"],
-            database=database,
-            indexer=indexer,
-            checker=checker,
-            replacer=replacer,
-        )
+        logger.info(f"Configuration: {pprint.pformat(config)}")
+        logging.getLogger().setLevel(config["logger"]["level"])
 
-        if args.action in ["watch", "replace"]:
-            indexer.index_target_directories()
-            finder.find_and_replace()
+        with sqlite3.connect(config["database"]) as database:
+            indexer = Indexer(
+                config=config["indexer"],
+                target_directories=config["finder"]["directories"]["symlink-target-directories"],
+                database=database,
+                min_size=config["checker"]["files-min-size-bytes"],
+            )
+            checker = Checker(
+                config=config["checker"],
+                database=database,
+            )
+            replacer = Replacer(
+                config=config["replacer"],
+                database=database,
+            )
+            finder = Finder(
+                config=config["finder"],
+                database=database,
+                indexer=indexer,
+                checker=checker,
+                replacer=replacer,
+            )
 
-        if args.action in ["reset-hashes"]:
-            checker.clear_hashes_cache()
+            if args.action in ["watch", "replace-with-symlinks", "replace-with-content"]:
+                indexer.index_target_directories()
+            
+            if args.action in ["watch", "replace-with-symlinks"]:
+                finder.find_and_replace_with_symlinks()
+            
+            if args.action in ["watch", "replace-with-content"]:
+                finder.find_and_replace_with_content()
 
-    # replacer = Replacer(
-    #     watch_directory=args.watch_directory,
-    #     symlink_target_directory=args.symlink_target_directory,
-    # )
+            if args.action in ["clear-changelog"]:
+                replacer.clear_changelog()
+
+            if args.action in ["clear-hashes"]:
+                checker.clear_hashes_cache()
+
+            if args.action in ["watch"]:
+                # Sleep so that the total time is interval-seconds
+                interval_duration = config["watcher"]["interval-seconds"]
+                run_duration = (round(time.time()) - start_time)
+                sleep_duration = interval_duration - run_duration
+                if sleep_duration <= 0:
+                    sleep_duration = interval_duration
+
+                logger.info(f"Sleeping for {sleep_duration} seconds...")
+                time.sleep(sleep_duration)
+            else:
+                return 0
 
 
 if __name__ == "__main__":

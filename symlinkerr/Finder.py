@@ -12,9 +12,10 @@ If all is in other, pass them to the Replacer for actual replacement.
 class Finder:
     logger = logging.getLogger("Finder")
 
-    def __init__(self, config, watch_directories, database, indexer, checker, replacer):
+    def __init__(self, config, database, indexer, checker, replacer):
         self.config = config
-        self.watch_directories = watch_directories
+        self.watch_directories = config["directories"]["watch-directories"]
+        self.undo_directories = config["directories"]["undo-all-symlinks-directories"]
         self.database = database
         self.indexer = indexer
         self.checker = checker
@@ -22,6 +23,7 @@ class Finder:
 
         self.followlinks = self.config["followlinks"]
         self.find_candidates_by = self.config["find-candidates-by"]
+        self.only_undo_symlinks_to_target_directories = self.config["only-undo-symlinks-to-target-directories"]
 
     def get_candidates(self, file):
         if self.find_candidates_by == "SIZE":
@@ -32,19 +34,19 @@ class Finder:
             file.get_size(), file.get_filename()
         )
 
-    def find_and_replace(self):
+    def find_and_replace_with_symlinks(self):
         for directory in self.watch_directories:
-            self.logger.info(f"Finding files to replace in directory {directory}")
-            self.find_and_replace_in_directory(directory["dir"])
+            self.logger.info(f"Finding files to replace with symlinks in directory {directory}")
+            self.find_and_replace_with_symlinks_in_directory(directory["dir"])
 
-    def find_and_replace_in_directory(self, path):
+    def find_and_replace_with_symlinks_in_directory(self, path):
         for root, dirs, files in os.walk(path, followlinks=self.followlinks):
             for filename in files:
                 fullpath = os.path.join(root, filename)
                 # We very obviously want to avoid symlinks!
                 if not os.path.islink(fullpath):
                     file = File(fullpath)
-                    if self.checker.is_eligible_for_replacement(file):
+                    if (not self.replacer.is_file_a_replacement(file)) and self.checker.is_eligible_for_replacement(file):
                         candidates = self.get_candidates(file)
                         self.logger.info(
                             f"Candidates for {fullpath} sorted by priority:\n{"\n".join(candidates)}"
@@ -58,3 +60,20 @@ class Finder:
                                 )
                                 self.replacer.replace_with_symlink(file, candidate_file)
                                 break # Do not evaluate other candidates
+
+    def find_and_replace_with_content(self):
+        for directory in self.watch_directories:
+            self.logger.info(f"Finding files to replace with content in directory {directory}")
+            self.find_and_replace_with_content_in_directory(directory["dir"])
+
+    def find_and_replace_with_content_in_directory(self, path):
+        for root, dirs, files in os.walk(path, followlinks=self.followlinks):
+            for filename in files:
+                fullpath = os.path.join(root, filename)
+                # We are only interested in symlinks over here!
+                if os.path.islink(fullpath):
+                    link_target = os.readlink(fullpath)
+                    if not self.only_undo_symlinks_to_target_directories or self.indexer.is_file_within_target_directories(link_target):
+                        self.logger.info(f"Found a simlink to unwind: {fullpath}")
+
+                    

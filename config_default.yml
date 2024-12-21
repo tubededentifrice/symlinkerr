@@ -10,10 +10,6 @@ watcher:
   # How often to check for new files and replace them
   interval-seconds: 3600
 
-  # How often should be recheck files for which we failed to find a match
-  # 0 to disable. Use "reset-failures" action so they will be checked again on the next check.
-  recheck-failures-interval-seconds: 0
-
 indexer:
   # Follow symlinks in the symlink-target-directories
   followlinks: false
@@ -25,6 +21,32 @@ finder:
   # SIZE or FILENAME or SIZE_AND_FILENAME
   # SIZE should be good enough unless you have many files with the same size
   find-candidates-by: "SIZE_AND_FILENAME"
+
+  # If true, only the symlinks pointing to one of the symlink-target-directories will be undone
+  only-undo-symlinks-to-target-directories: true
+
+  directories:
+    # Directories where we will delete files and replace them with symlinks
+    watch-directories:  # movies and movies-tmp
+      - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+
+    # Directories where we will try to find replacements
+    # Only files with the exact same size will be eligible.
+    # After finding a candidate, the hash of both files will be computed to ensure they are indeed identical (and accessible!)
+    # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
+    # If there is still multiple matching candidates, a random one will be chosen
+    # It is VERY important those paths are mounted to the same places everywhere (host, containers, etc.), otherwise they won't resolve properly accross apps
+    symlink-target-directories:
+      - dir: "/mnt/remotes/rclone/zurg/__downloads__"
+        priority: 1
+      - dir: "/mnt/remotes/rclone/zurg/__all__"
+        priority: 2
+
+    # Symlinks in this folder will be replaced by the content at the target of the symlink
+    # Eg. this is the things you actually want to store locally, if you are happy with the content
+    # Must obviously NOT be with the watch-directories, otherwise it will replace with a symlink, then replace that symlink with content, etc.
+    undo-all-symlinks-directories: []  # /data/media/movies-backupthis and tv-backupthis
+
 
 checker:
   # How long to wait after the file has been last modified to replace it
@@ -51,23 +73,10 @@ replacer:
   # Dry run will only log what it would have done, but won't do anything
   dry-run: true
 
-directories:
-  # Directories where we will delete files and replace them with symlinks
-  watch-directories:  # movies and movies-tmp
-    - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+  # Instead of deleting the original file, will rename it with the given suffix
+  # This is not atomic, so can theoretically lead to orphans (file renamed, but the symlink has not been moved to take its spot yet)
+  # but the simlink will be created first, with a .tmp extension
+  add-suffix-instead-of-deleting: true
 
-  # Directories where we will try to find replacements
-  # Only files with the exact same size will be eligible.
-  # After finding a candidate, the hash of both files will be computed to ensure they are indeed identical (and accessible!)
-  # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
-  # If there is still multiple matching candidates, a random one will be chosen
-  # It is VERY important those paths are mounted to the same places everywhere (host, containers, etc.), otherwise they won't resolve properly accross apps
-  symlink-target-directories:
-    - dir: "/mnt/remotes/zurg/__downloads__"
-      priority: 1
-    - dir: "/mnt/remotes/zurg/__all__"
-      priority: 2
-
-  # Symlinks in this folder will be replaced by the content at the target of the symlink
-  # Eg. this is the things you actually want to store locally, if you are happy with the content
-  undo-all-symlinks-directories: []  # /data/media/movies-backupthis and tv-backupthis
+  # To avoid infinite loop, files with this suffix will be ignored
+  suffix: ".bak"

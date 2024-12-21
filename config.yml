@@ -1,2 +1,27 @@
 logger:
   level: DEBUG
+
+finder:
+  followlinks: false
+  find-candidates-by: "SIZE"
+
+  directories:
+    watch-directories: []
+
+    symlink-target-directories:
+      - dir: "/mnt/remotes/rclone/zurg/__downloads__"
+        priority: 1
+      - dir: "/mnt/remotes/rclone/zurg/__all__"
+        priority: 2
+
+    undo-all-symlinks-directories:
+      - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+
+checker:
+  change-in-mtime-invalidates-hash: false
+
+replacer:
+  dry-run: false
+
+  add-suffix-instead-of-deleting: true
+  suffix: ".bak"
