@@ -5,6 +5,7 @@ import argparse
 import logging
 import pprint
 import os
+import shutil
 import sqlite3
 import yaml
 from symlinkerr.Checker import Checker
@@ -12,6 +13,16 @@ from symlinkerr.Finder import Finder
 from symlinkerr.Indexer import Indexer
 from symlinkerr.Replacer import Replacer
 
+def merge(source, destination):
+    if source is not None:
+        for key, value in source.items():
+            if isinstance(value, dict):
+                node = destination.setdefault(key, {})
+                merge(value, node)
+            else:
+                destination[key] = value
+
+    return destination
 
 def main():
     parser = argparse.ArgumentParser(
@@ -45,43 +56,52 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
 
     logger.info(f"Running with parameters: {vars(args)}")
 
-    with open("config_default.yml", "r") as config_file:
-        default_config = yaml.safe_load(config_file)
+    config_default_file = "config_default.yml"
+    with open(config_default_file, "r") as config_file:
+        config = yaml.safe_load(config_file)
     
     # Create configuration file if it doesn't exist
-    if args.config == "config.yml" and not os.path.isfile(args.config):
-        open(args.config, 'a').close()
-    with open(args.config, "r") as config_file:
-        config = {**default_config, **yaml.safe_load(config_file)}
+    config_arg_file = args.config
+    if os.path.isfile(config_arg_file):
+        with open(config_arg_file, "r") as config_file:
+            config = merge(yaml.safe_load(config_file), config)
+    elif config_arg_file == "config.yml":
+        logger.info(f"Configuration not found, creating a base one: {config_arg_file}")
+        shutil.copy(config_default_file, config_arg_file)
+    else:
+        raise Exception(f"Config file {config_arg_file} not found; since this is potentially destructive, refusing to run. Create that file and try again.")
+        exit(1)
 
     logger.info(f"Configuration: {pprint.pformat(config)}")
+    logging.getLogger().setLevel(config["logger"]["level"])
 
-    database = sqlite3.connect(config["database"])
-    indexer = Indexer(
-        config=config["indexer"],
-        target_directories=config["directories"]["symlink-target-directories"],
-        database=database,
-        min_size = config["finder"]["files-min-size-bytes"]
-    )
-    checker = Checker(
-        config=config["checker"],
-        database=database,
-    )
-    replacer = Replacer(
-        config = config["replacer"],
-        database=database,
-    )
-    finder = Finder(
-        config = config["finder"],
-        watch_directories=config["directories"]["watch-directories"],
-        database=database,
-        checker=checker,
-        replacer=replacer,
-    )
+    with sqlite3.connect(config["database"]) as database:
+        indexer = Indexer(
+            config=config["indexer"],
+            target_directories=config["directories"]["symlink-target-directories"],
+            database=database,
+            min_size = config["checker"]["files-min-size-bytes"]
+        )
+        checker = Checker(
+            config=config["checker"],
+            database=database,
+        )
+        replacer = Replacer(
+            config = config["replacer"],
+            database=database,
+        )
+        finder = Finder(
+            config = config["finder"],
+            watch_directories=config["directories"]["watch-directories"],
+            database=database,
+            indexer=indexer,
+            checker=checker,
+            replacer=replacer,
+        )
 
-    if args.action in ["watch", "replace"]:
-        indexer.index_target_directories()
-        finder.find_and_replace()
+        if args.action in ["watch", "replace"]:
+            indexer.index_target_directories()
+            finder.find_and_replace()
 
 
     # replacer = Replacer(

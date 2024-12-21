@@ -2,6 +2,10 @@
 # And is very useful if we want to revert what has been done, and only what has been done.
 database: "/config/symlinkerr.sqlite"
 
+logger:
+  # Log level DEBUG or INFO
+  level: INFO
+
 watcher:
   # How often to check for new files and replace them
   interval-seconds: 86400
@@ -17,17 +21,20 @@ indexer:
 finder:
   # Follow symlinks in the watch-directories
   followlinks: false
+  find-candidates-by: "SIZE_AND_FILENAME"  # SIZE or FILENAME or SIZE_AND_FILENAME
 
-  # Do not try to replace files too early, as they might still be processing
-  files-min-age-seconds: 3600
-
-  # Do not try to replace small files
-  files-min-size-bytes: 52428800
 
 checker:
-  check-filesize: true
+  # How long to wait after the file has been last modified to replace it
+  files-min-age-seconds: 3600
+
+  # Do not try to replace small files, put that to a relatively large value, eg. 50MB or more
+  files-min-size-bytes: 52428800
+
+  # Checks that the hash of both files are the same (and that they are indeed readable)
+  # Should always be true, unless find-candidates-by is FILENAME and you have reencoded the original files, so they are actually different on disk
   check-hash: true
-  check-filename: false
+
   # Files and folders that shouldn't be visible to the indexer
   # All exclusions are evaluated on the full absolute path of the file
   exclusions:
@@ -39,7 +46,7 @@ replacer:
   dry-run: true
 
 directories:
-  # Directories where we will delete files
+  # Directories where we will delete files and replace them with symlinks
   watch-directories:
     - dir: "/data/media/movies/The Aviator (2004) [imdb-tt0338751]"
 

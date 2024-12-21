@@ -1,2 +1,2 @@
-watcher:
-  interval-seconds: 5
+logger:
+  level: DEBUG

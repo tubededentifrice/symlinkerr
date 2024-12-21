@@ -1,5 +1,6 @@
 import logging
 import os
+from symlinkerr.File import File
 
 """
 Find all the files in the target directories and put them into the database.
@@ -39,14 +40,39 @@ class Indexer:
         for root, dirs, files in os.walk(path, followlinks=self.followlinks):
             for filename in files:
                 fullpath = os.path.join(root, filename)
-                size = os.path.getsize(fullpath)
-                if size >= self.min_size:
-                    self.logger.debug(f"Found file with size {size}: {fullpath}")
+                file = File(fullpath)
+                if file.get_size() >= self.min_size:
+                    self.logger.debug(
+                        f"Found file with size {file.get_size()}: {fullpath}"
+                    )
                     self.database.execute(
                         "INSERT OR IGNORE INTO index_target_directories(fullpath, filename, size, priority) VALUES(?, ?, ?, ?)",
-                        (fullpath, filename, size, priority),
+                        (fullpath, filename, file.get_size(), priority),
                     )
                 else:
                     self.logger.debug(
-                        f"Ignoring file with size {size}: {fullpath} as it's lower than the minimum threshold of {self.min_size}"
+                        f"Ignoring file with size {file.get_size()}: {fullpath} as it's lower than the minimum threshold of {self.min_size}"
                     )
+
+    def get_candidates_by_size_and_filename(self, size, filename):
+        return self.fetch_to_array(self.database.execute(
+            f"SELECT fullpath FROM index_target_directories WHERE size={size} AND filename=? ORDER BY priority",
+            (filename,),
+        ))
+
+    def get_candidates_by_size(self, size):
+        return self.fetch_to_array(self.database.execute(
+            f"SELECT fullpath FROM index_target_directories WHERE size={size} ORDER BY priority"
+        ))
+
+    def get_candidates_by_filename(self, filename):
+        return self.fetch_to_array(self.database.execute(
+            "SELECT fullpath FROM index_target_directories WHERE filename=? ORDER BY priority",
+            (filename,),
+        ))
+
+    def fetch_to_array(self, cursor):
+        return [
+            c[0]
+            for c in cursor.fetchall()
+        ]
