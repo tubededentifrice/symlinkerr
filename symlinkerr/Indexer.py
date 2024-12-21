@@ -25,7 +25,7 @@ class Indexer:
             CREATE TABLE index_target_directories (
                 fullpath VARCHAR PRIMARY KEY,
                 filename VARCHAR,
-                size INTEGER,
+                size LONG,
                 priority INTEGER
             );
         """)

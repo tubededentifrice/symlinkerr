@@ -19,7 +19,7 @@ class Checker:
             CREATE TABLE IF NOT EXISTS hashes (
                 fullpath VARCHAR PRIMARY KEY,
                 hash VARCHAR,
-                size INTEGER,
+                size LONG,
                 mtime LONG
             );
         """)
@@ -65,15 +65,23 @@ class Checker:
         # Check the file hashes
         if self.check_hash:
             original_file_hash = self.get_hash(original_file)
+            self.logger.debug(f"Hash of {original_file.fullpath} is {original_file_hash}")
+
             replacement_file_hash = self.get_hash(replacement_file)
-            pass
+            self.logger.debug(f"Hash of {replacement_file.fullpath} is {replacement_file_hash}")
+
+            if original_file_hash != replacement_file_hash:
+                return False
 
         return True
 
     def get_hash(self, file):
         cursor = self.database.execute(
-            "SELECT hash FROM hashes WHERE fullpath=? AND size=? AND mtime=?",
-            (file.filepath, file.get_size(), file.get_mtime(), )
+            f"SELECT hash FROM hashes WHERE fullpath=? AND size={file.get_size()} AND mtime={file.get_mtime()}",
+            (file.fullpath, )
         )
-        hash_in_cache = cursor.fetchone()
-        print(f"hash_in_cache = {hash_in_cache}")
+
+        hash_in_cache = cursor.fetchone()[0]
+        if hash_in_cache is not None:
+            return hash_in_cache
+        

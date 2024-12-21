@@ -16,7 +16,7 @@ class File:
 
     def get_mtime(self):
         if self.__mtime is None:
-            self.__mtime = os.path.getmtime(self.fullpath)
+            self.__mtime = round(os.path.getmtime(self.fullpath))
         return self.__mtime
 
     def get_size(self):
