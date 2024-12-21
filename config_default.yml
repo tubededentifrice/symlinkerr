@@ -7,7 +7,7 @@ logger:
   level: INFO
 
 watcher:
-  # How often to check for new files and replace them
+  # How often should we run to replace the files when in "watch" mode
   interval-seconds: 3600
 
 indexer:

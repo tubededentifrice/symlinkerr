@@ -1,5 +1,8 @@
 logger:
-  level: DEBUG
+  level: INFO
+
+watcher:
+  interval-seconds: 30
 
 finder:
   followlinks: false
