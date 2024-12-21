@@ -8,7 +8,7 @@ logger:
 
 watcher:
   # How often to check for new files and replace them
-  interval-seconds: 86400
+  interval-seconds: 3600
 
   # How often should be recheck files for which we failed to find a match
   # 0 to disable. Use "reset-failures" action so they will be checked again on the next check.
@@ -21,8 +21,10 @@ indexer:
 finder:
   # Follow symlinks in the watch-directories
   followlinks: false
-  find-candidates-by: "SIZE_AND_FILENAME"  # SIZE or FILENAME or SIZE_AND_FILENAME
 
+  # SIZE or FILENAME or SIZE_AND_FILENAME
+  # SIZE should be good enough unless you have many files with the same size
+  find-candidates-by: "SIZE_AND_FILENAME"
 
 checker:
   # How long to wait after the file has been last modified to replace it
@@ -34,6 +36,9 @@ checker:
   # Checks that the hash of both files are the same (and that they are indeed readable)
   # Should always be true, unless find-candidates-by is FILENAME and you have reencoded the original files, so they are actually different on disk
   check-hash: true
+
+  # Can be set to false if your files aren't supposed to change but are still pushing fake modification times to the filesystem
+  change-in-mtime-invalidates-hash: true
 
   # Files and folders that shouldn't be visible to the indexer
   # All exclusions are evaluated on the full absolute path of the file
@@ -48,14 +53,15 @@ replacer:
 
 directories:
   # Directories where we will delete files and replace them with symlinks
-  watch-directories:
-    - dir: "/data/media/movies/The Aviator (2004) [imdb-tt0338751]"
+  watch-directories:  # movies and movies-tmp
+    - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
 
   # Directories where we will try to find replacements
   # Only files with the exact same size will be eligible.
   # After finding a candidate, the hash of both files will be computed to ensure they are indeed identical (and accessible!)
   # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
   # If there is still multiple matching candidates, a random one will be chosen
+  # It is VERY important those paths are mounted to the same places everywhere (host, containers, etc.), otherwise they won't resolve properly accross apps
   symlink-target-directories:
     - dir: "/mnt/remotes/zurg/__downloads__"
       priority: 1
@@ -63,4 +69,5 @@ directories:
       priority: 2
 
   # Symlinks in this folder will be replaced by the content at the target of the symlink
-  undo-all-symlinks-directories: []
+  # Eg. this is the things you actually want to store locally, if you are happy with the content
+  undo-all-symlinks-directories: []  # /data/media/movies-backupthis and tv-backupthis

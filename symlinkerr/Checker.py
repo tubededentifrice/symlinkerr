@@ -1,8 +1,11 @@
+import hashlib
 import logging
 import re
 import time
-import hashlib
 
+"""
+Perform the replacement checks
+"""
 
 class Checker:
     logger = logging.getLogger("Checker")
@@ -79,16 +82,17 @@ class Checker:
         # Check the file hashes
         if self.check_hash:
             original_file_hash = self.get_hash(original_file)
-            self.logger.debug(
-                f"Hash of {original_file.fullpath} is {original_file_hash}"
-            )
+            self.logger.debug(f"Hash {original_file_hash} for {original_file.fullpath}")
 
             replacement_file_hash = self.get_hash(replacement_file)
             self.logger.debug(
-                f"Hash of {replacement_file.fullpath} is {replacement_file_hash}"
+                f"Hash {replacement_file_hash} for {replacement_file.fullpath}"
             )
 
             if original_file_hash != replacement_file_hash:
+                self.logger.debug(
+                    f"Both files have different hashes, discarding {replacement_file.fullpath} as a candidate for {original_file.fullpath}"
+                )
                 return False
 
         return True
@@ -108,7 +112,7 @@ class Checker:
         self.logger.debug(
             f"Could not find the hash of {file.fullpath} in the cache, computing it, this will take a while"
         )
-        file_hash = self.sha256sum(file.fullpath)
+        file_hash = self.compute_hash(file)
 
         self.database.execute(
             "INSERT OR REPLACE INTO hashes(fullpath, hash, size, mtime) VALUES(?, ?, ?, ?)",
@@ -118,6 +122,19 @@ class Checker:
 
         return file_hash
 
-    def sha256sum(self, fullpath):
-        with open(fullpath, "rb", buffering=0) as f:
-            return hashlib.file_digest(f, "sha256").hexdigest()
+    def compute_hash(self, file):
+        # This is much more expensive for no good reason and can't print progress
+        # with open(fullpath, "rb", buffering=0) as f:
+        #     return hashlib.file_digest(f, "sha256").hexdigest()
+
+        blocksize = 2**20
+        m = hashlib.md5()
+        with open(file.fullpath, "rb") as f:
+            while True:
+                buf = f.read(blocksize)
+                if not buf:
+                    print("", flush=True)
+                    break
+                m.update(buf)
+                print(".", end="", flush=True)
+        return m.hexdigest()

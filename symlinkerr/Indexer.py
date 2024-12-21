@@ -1,5 +1,6 @@
 import logging
 import os
+
 from symlinkerr.File import File
 
 """
@@ -55,24 +56,27 @@ class Indexer:
                     )
 
     def get_candidates_by_size_and_filename(self, size, filename):
-        return self.fetch_to_array(self.database.execute(
-            f"SELECT fullpath FROM index_target_directories WHERE size={size} AND filename=? ORDER BY priority",
-            (filename,),
-        ))
+        return self.fetch_to_array(
+            self.database.execute(
+                f"SELECT fullpath FROM index_target_directories WHERE size={size} AND filename=? ORDER BY priority",
+                (filename,),
+            )
+        )
 
     def get_candidates_by_size(self, size):
-        return self.fetch_to_array(self.database.execute(
-            f"SELECT fullpath FROM index_target_directories WHERE size={size} ORDER BY priority"
-        ))
+        return self.fetch_to_array(
+            self.database.execute(
+                f"SELECT fullpath FROM index_target_directories WHERE size={size} ORDER BY priority"
+            )
+        )
 
     def get_candidates_by_filename(self, filename):
-        return self.fetch_to_array(self.database.execute(
-            "SELECT fullpath FROM index_target_directories WHERE filename=? ORDER BY priority",
-            (filename,),
-        ))
+        return self.fetch_to_array(
+            self.database.execute(
+                "SELECT fullpath FROM index_target_directories WHERE filename=? ORDER BY priority",
+                (filename,),
+            )
+        )
 
     def fetch_to_array(self, cursor):
-        return [
-            c[0]
-            for c in cursor.fetchall()
-        ]
+        return [c[0] for c in cursor.fetchall()]

@@ -3,15 +3,18 @@
 
 import argparse
 import logging
-import pprint
 import os
+import pprint
 import shutil
 import sqlite3
+
 import yaml
+
 from symlinkerr.Checker import Checker
 from symlinkerr.Finder import Finder
 from symlinkerr.Indexer import Indexer
 from symlinkerr.Replacer import Replacer
+
 
 def merge(source, destination):
     if source is not None:
@@ -23,6 +26,7 @@ def merge(source, destination):
                 destination[key] = value
 
     return destination
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -45,13 +49,23 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         default="watch",
         const="watch",
         nargs="?",
-        choices=["replace", "watch", "undo", "undo-all-symlinks", "reset-failures", "reset-hashes"],
+        choices=[
+            "replace",
+            "watch",
+            "undo",
+            "undo-all-symlinks",
+            "reset-failures",
+            "reset-hashes",
+        ],
         help="Action to perform (default: %(default)s)",
     )
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s - %(module)s - %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s - %(module)s - %(message)s",
+    )
     logger = logging.getLogger("symlinkerr")
 
     logger.info(f"Running with parameters: {vars(args)}")
@@ -59,7 +73,7 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
     config_default_file = "config_default.yml"
     with open(config_default_file, "r") as config_file:
         config = yaml.safe_load(config_file)
-    
+
     # Create configuration file if it doesn't exist
     config_arg_file = args.config
     if os.path.isfile(config_arg_file):
@@ -69,7 +83,9 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         logger.info(f"Configuration not found, creating a base one: {config_arg_file}")
         shutil.copy(config_default_file, config_arg_file)
     else:
-        raise Exception(f"Config file {config_arg_file} not found; since this is potentially destructive, refusing to run. Create that file and try again.")
+        raise Exception(
+            f"Config file {config_arg_file} not found; since this is potentially destructive, refusing to run. Create that file and try again."
+        )
         exit(1)
 
     logger.info(f"Configuration: {pprint.pformat(config)}")
@@ -80,18 +96,18 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             config=config["indexer"],
             target_directories=config["directories"]["symlink-target-directories"],
             database=database,
-            min_size = config["checker"]["files-min-size-bytes"]
+            min_size=config["checker"]["files-min-size-bytes"],
         )
         checker = Checker(
             config=config["checker"],
             database=database,
         )
         replacer = Replacer(
-            config = config["replacer"],
+            config=config["replacer"],
             database=database,
         )
         finder = Finder(
-            config = config["finder"],
+            config=config["finder"],
             watch_directories=config["directories"]["watch-directories"],
             database=database,
             indexer=indexer,
@@ -105,7 +121,6 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
 
         if args.action in ["reset-hashes"]:
             checker.clear_hashes_cache()
-
 
     # replacer = Replacer(
     #     watch_directory=args.watch_directory,

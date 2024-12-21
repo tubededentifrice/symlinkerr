@@ -1,8 +1,7 @@
 import logging
 import os
-import time
-from symlinkerr.File import File
 
+from symlinkerr.File import File
 
 """
 Find all the files in the watched directories, check they are eligible for replacement with the Checker.
@@ -29,7 +28,9 @@ class Finder:
             return self.indexer.get_candidates_by_size(file.get_size())
         if self.find_candidates_by == "FILENAME":
             return self.indexer.get_candidates_by_filename(file.get_filename())
-        return self.indexer.get_candidates_by_size_and_filename(file.get_size(), file.get_filename())
+        return self.indexer.get_candidates_by_size_and_filename(
+            file.get_size(), file.get_filename()
+        )
 
     def find_and_replace(self):
         for directory in self.watch_directories:
@@ -45,10 +46,15 @@ class Finder:
                     file = File(fullpath)
                     if self.checker.is_eligible_for_replacement(file):
                         candidates = self.get_candidates(file)
-                        self.logger.info(f"Candidates for {fullpath}:\n{"\n".join(candidates)}")
+                        self.logger.info(
+                            f"Candidates for {fullpath} sorted by priority:\n{"\n".join(candidates)}"
+                        )
 
                         for candidate in candidates:
                             candidate_file = File(candidate)
                             if self.checker.can_be_replaced_with(file, candidate_file):
-                                self.logger.info(f"Selected candidate {candidate} which matched all criteria, performing replacement")
-                                break
+                                self.logger.info(
+                                    f"Selected candidate {candidate} which matched all criteria, performing replacement"
+                                )
+                                self.replacer.replace_with_symlink(file, candidate_file)
+                                break # Do not evaluate other candidates
