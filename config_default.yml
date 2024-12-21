@@ -40,6 +40,7 @@ checker:
   exclusions:
     watch-directories-regexes: []
     symlink-target-directories-regexes: []
+    undo-all-symlinks-directories-regexes: []
 
 replacer:
   # Dry run will only log what it would have done, but won't do anything
@@ -56,5 +57,10 @@ directories:
   # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
   # If there is still multiple matching candidates, a random one will be chosen
   symlink-target-directories:
-    - dir: "/mnt/remotes/zurg/movies"
+    - dir: "/mnt/remotes/zurg/__downloads__"
       priority: 1
+    - dir: "/mnt/remotes/zurg/__all__"
+      priority: 2
+
+  # Symlinks in this folder will be replaced by the content at the target of the symlink
+  undo-all-symlinks-directories: []

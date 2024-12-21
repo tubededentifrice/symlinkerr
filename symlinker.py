@@ -103,6 +103,9 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             indexer.index_target_directories()
             finder.find_and_replace()
 
+        if args.action in ["reset-hashes"]:
+            checker.clear_hashes_cache()
+
 
     # replacer = Replacer(
     #     watch_directory=args.watch_directory,

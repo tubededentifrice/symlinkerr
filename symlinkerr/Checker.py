@@ -1,6 +1,8 @@
 import logging
 import re
 import time
+import hashlib
+
 
 class Checker:
     logger = logging.getLogger("Checker")
@@ -12,9 +14,21 @@ class Checker:
         self.min_size = self.config["files-min-size-bytes"]
         self.min_age = self.config["files-min-age-seconds"]
         self.check_hash = config["check-hash"]
-        self.exclude_watch_directories = [re.compile(r) for r in config["exclusions"]["watch-directories-regexes"]]
-        self.exclude_target_directories = [re.compile(r) for r in config["exclusions"]["symlink-target-directories-regexes"]]
+        self.exclude_watch_directories = [
+            re.compile(r) for r in config["exclusions"]["watch-directories-regexes"]
+        ]
+        self.exclude_target_directories = [
+            re.compile(r)
+            for r in config["exclusions"]["symlink-target-directories-regexes"]
+        ]
 
+        self.create_hashes_table()
+
+    def clear_hashes_cache(self):
+        self.database.execute("DROP TABLE IF EXISTS hashes;")
+        self.create_hashes_table()  # This will do the commit()
+
+    def create_hashes_table(self):
         self.database.execute("""
             CREATE TABLE IF NOT EXISTS hashes (
                 fullpath VARCHAR PRIMARY KEY,
@@ -65,10 +79,14 @@ class Checker:
         # Check the file hashes
         if self.check_hash:
             original_file_hash = self.get_hash(original_file)
-            self.logger.debug(f"Hash of {original_file.fullpath} is {original_file_hash}")
+            self.logger.debug(
+                f"Hash of {original_file.fullpath} is {original_file_hash}"
+            )
 
             replacement_file_hash = self.get_hash(replacement_file)
-            self.logger.debug(f"Hash of {replacement_file.fullpath} is {replacement_file_hash}")
+            self.logger.debug(
+                f"Hash of {replacement_file.fullpath} is {replacement_file_hash}"
+            )
 
             if original_file_hash != replacement_file_hash:
                 return False
@@ -76,12 +94,30 @@ class Checker:
         return True
 
     def get_hash(self, file):
+        # Check if the hash is in the cache
         cursor = self.database.execute(
             f"SELECT hash FROM hashes WHERE fullpath=? AND size={file.get_size()} AND mtime={file.get_mtime()}",
-            (file.fullpath, )
+            (file.fullpath,),
         )
 
-        hash_in_cache = cursor.fetchone()[0]
+        hash_in_cache = cursor.fetchone()
         if hash_in_cache is not None:
-            return hash_in_cache
-        
+            return hash_in_cache[0]
+
+        # Get the hash an populate the cache
+        self.logger.debug(
+            f"Could not find the hash of {file.fullpath} in the cache, computing it, this will take a while"
+        )
+        file_hash = self.sha256sum(file.fullpath)
+
+        self.database.execute(
+            "INSERT OR REPLACE INTO hashes(fullpath, hash, size, mtime) VALUES(?, ?, ?, ?)",
+            (file.fullpath, file_hash, file.get_size(), file.get_mtime()),
+        )
+        self.database.commit()
+
+        return file_hash
+
+    def sha256sum(self, fullpath):
+        with open(fullpath, "rb", buffering=0) as f:
+            return hashlib.file_digest(f, "sha256").hexdigest()
