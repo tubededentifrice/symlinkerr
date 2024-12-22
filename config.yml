@@ -2,7 +2,7 @@ logger:
   level: INFO
 
 watcher:
-  interval-seconds: 30
+  interval-seconds: 3600
 
 finder:
   followlinks: false
@@ -10,7 +10,8 @@ finder:
 
   directories:
     watch-directories:
-      - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+      - dir: "/data/media/movies-tmp"
+      - dir: "/data/media/movies"
 
     symlink-target-directories:
       - dir: "/mnt/remotes/rclone/zurg/__downloads__"
@@ -19,11 +20,12 @@ finder:
         priority: 2
 
     undo-all-symlinks-directories: []
-      # - dir: "/data/media/movies-tmp/Titane (2021) [imdb-tt10944760]"
+      # - dir: "/data/media/movies-backupthis"
+      # - dir: "/data/media/tv-backupthis"
 
 checker:
   files-min-age-seconds: 0
   change-in-mtime-invalidates-hash: false
 
 replacer:
-  dry-run: false
+  dry-run: true

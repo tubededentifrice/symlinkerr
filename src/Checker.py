@@ -1,7 +1,10 @@
 import hashlib
 import logging
 import re
+import sqlite3
 import time
+
+from src.File import File
 
 """
 Perform the replacement checks
@@ -11,7 +14,7 @@ Perform the replacement checks
 class Checker:
     logger = logging.getLogger("Checker")
 
-    def __init__(self, config, database):
+    def __init__(self, config: dict, database: sqlite3.Connection):
         self.config = config
         self.database = database
 
@@ -36,11 +39,11 @@ class Checker:
 
         self.create_hashes_table()
 
-    def clear_hashes_cache(self):
+    def clear_hashes_cache(self) -> None:
         self.database.execute("DROP TABLE IF EXISTS hashes;")
         self.create_hashes_table()  # This will do the commit()
 
-    def create_hashes_table(self):
+    def create_hashes_table(self) -> None:
         self.database.execute("""
             CREATE TABLE IF NOT EXISTS hashes (
                 fullpath VARCHAR PRIMARY KEY,
@@ -51,7 +54,7 @@ class Checker:
         """)
         self.database.commit()
 
-    def is_eligible_for_replacement(self, file):
+    def is_eligible_for_replacement(self, file: File) -> bool:
         # Do the fastest checks first
 
         # Check if the size matches the criteria
@@ -79,7 +82,7 @@ class Checker:
 
         return True
 
-    def can_be_replaced_with(self, original_file, replacement_file):
+    def can_be_replaced_with(self, original_file: File, replacement_file: File) -> bool:
         # Check that the destination is not excluded
         for exclusion in self.exclude_target_directories:
             if exclusion.match(replacement_file.fullpath):
@@ -99,24 +102,27 @@ class Checker:
             )
 
             if original_file_hash != replacement_file_hash:
-                self.logger.debug(
+                self.logger.info(
                     f"Both files have different hashes, discarding {replacement_file.fullpath} as a candidate for {original_file.fullpath}"
                 )
                 return False
 
+        self.logger.info(
+            f"Both files have same hash {original_file_hash}, accepting {replacement_file.fullpath} as a candidate for {original_file.fullpath}"
+        )
         return True
 
-    def is_eligible_for_content_replacement(self, symlink_file):
+    def is_eligible_for_content_replacement(self, symlink_file: File) -> bool:
         for exclusion in self.exclude_undo_symlinks_directories:
             if exclusion.match(symlink_file.fullpath):
                 self.logger.debug(
                     f"Symlink {symlink_file} matching exclusion regex '{exclusion.pattern}'"
                 )
                 return False
-        
+
         return True
 
-    def get_hash(self, file):
+    def get_hash(self, file: File) -> str:
         # Check if the hash is in the cache
 
         query = f"SELECT hash FROM hashes WHERE fullpath=? AND size={file.get_size()}"
@@ -130,10 +136,11 @@ class Checker:
             return hash_in_cache[0]
 
         # Get the hash an populate the cache
-        self.logger.debug(
-            f"Could not find the hash of {file.fullpath} in the cache, computing it, this will take a while"
-        )
+        self.logger.info(f"Could not find the hash of {file.fullpath} in the cache, computing it, this will take a while")
+        start_time = round(time.time())
         file_hash = self.compute_hash(file)
+        end_time = round(time.time())
+        self.logger.info(f"Computing the hash of {file.fullpath} ({file_hash}) took {end_time - start_time} seconds")
 
         self.database.execute(
             "INSERT OR REPLACE INTO hashes(fullpath, hash, size, mtime) VALUES(?, ?, ?, ?)",
@@ -143,7 +150,7 @@ class Checker:
 
         return file_hash
 
-    def compute_hash(self, file):
+    def compute_hash(self, file: File) -> str:
         # This is much more expensive for no good reason and can't print progress
         # with open(fullpath, "rb", buffering=0) as f:
         #     return hashlib.file_digest(f, "sha256").hexdigest()

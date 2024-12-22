@@ -1,3 +1,6 @@
+# This is the base config override, which keep most of the defaults
+# and overrides only whats actually necessary for most users
+
 # This database will store the index of the files, what has been done, etc.
 # And is very useful if we want to revert what has been done, and only what has been done.
 database: "/config/symlinkerr.sqlite"
@@ -6,31 +9,11 @@ logger:
   # Log level DEBUG or INFO, WARN and ERROR are possible but not recommended
   level: INFO
 
-watcher:
-  # How often should we run to replace the files when in "watch" mode
-  # Note: this takes into account the total run duration,
-  # so if the run took 300 seconds and your interval is 3600 seconds, it will sleep for 3300 seconds at the end of the loop
-  interval-seconds: 3600
-
-indexer:
-  # Follow directory symlinks in the symlink-target-directories
-  followlinks: false
-
 finder:
-  # Follow directory symlinks in the watch-directories
-  followlinks: false
-
-  # SIZE or FILENAME or SIZE_AND_FILENAME or SIZE_OR_FILENAME
-  # SIZE should be good enough unless you have many files with the same size
-  find-candidates-by: "SIZE"
-
-  # If true, only the symlinks pointing to one of the symlink-target-directories will be undone
-  # Otherwise all symlinks will be undone
-  only-undo-symlinks-to-target-directories: true
-
   directories:
     # Directories where we will delete files and replace them with symlinks
-    watch-directories: []
+    watch-directories:
+      - dir: "/data/media/movies"
 
     # Directories where we will try to find replacements
     # Only files with the exact same size will be eligible.
@@ -38,14 +21,17 @@ finder:
     # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
     # If there is still multiple matching candidates, a random one will be chosen
     # It is VERY important those paths are mounted to the same places everywhere (host, containers, etc.), otherwise they won't resolve properly accross apps
-    symlink-target-directories: []
+    symlink-target-directories:
+      - dir: "/mnt/remotes/rclone/zurg/__downloads__"
+        priority: 1
+      - dir: "/mnt/remotes/rclone/zurg/__all__"
+        priority: 2
 
     # Symlinks in this folder will be replaced by the content at the target of the symlink
     # Eg. this is the things you actually want to store locally, if you are happy with the content
     # Must obviously NOT be with the watch-directories, otherwise it will replace with a symlink, then replace that symlink with content, etc.
-    undo-all-symlinks-directories: []
-      # - dir: "/data/media/movies-backupthis"
-      # - dir: "/data/media/tv-backupthis"
+    undo-all-symlinks-directories:
+      - dir: "/data/media/movies-i-like"
 
 checker:
   # How long to wait after the file has been last modified to replace it
@@ -62,7 +48,7 @@ checker:
   change-in-mtime-invalidates-hash: true
 
   # Files and folders that shouldn't be visible to the indexer
-  # All exclusions are evaluated against the full absolute path of the file
+  # All exclusions are evaluated against the full absolute path of the files
   # Just write regexes in there
   exclusions:
     watch-directories-regexes: []
@@ -73,12 +59,3 @@ replacer:
   # Dry run will only log what it would have done, but won't do anything.
   # It will populate the hash cache though, so the next runs will be very fast.
   dry-run: true
-
-  # Instead of deleting the original file, will rename it with the given suffix
-  # This is not atomic, so can theoretically lead to orphans (file renamed, but the symlink has not been moved to take its spot yet)
-  # but the simlink will be created first, with a .tmp extension
-  add-suffix-instead-of-deleting: false
-
-  # To avoid infinite loop, files with this suffix will be ignored
-  # Can be anything except ".tmp", which we use for intermediate operations
-  suffix: ".bak"

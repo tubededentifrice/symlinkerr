@@ -11,11 +11,12 @@ import time
 
 import yaml
 
-from symlinkerr.Checker import Checker
-from symlinkerr.Finder import Finder
-from symlinkerr.Indexer import Indexer
-from symlinkerr.Replacer import Replacer
+from src.Checker import Checker
+from src.Finder import Finder
+from src.Indexer import Indexer
+from src.Replacer import Replacer
 
+IS_IN_DOCKER = os.environ.get("IS_IN_DOCKER")
 
 def merge(source, destination):
     if source is not None:
@@ -36,11 +37,15 @@ Useful to save your local disk space by replacing your files with links to a rem
 WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with symlinks. If the target is deleted or moved, the symlinks will become invalids and you'll be screwed."""
     )
 
+    default_config_path = "config.yml"
+    if IS_IN_DOCKER:
+        default_config_path = "/config/" + default_config_path
+
     parser.add_argument(
         "-c",
         "--config",
-        default="config.yml",
-        const="config.yml",
+        default=default_config_path,
+        const=default_config_path,
         nargs="?",
         type=str,
         help="Config file (default: %(default)s)",
@@ -60,7 +65,7 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             "replace-with-symlinks",
             "replace-with-content",
             "watch",
-            "undo",
+            # "changelog",
             "clear-changelog",
             "clear-hashes",
         ],
@@ -90,16 +95,11 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         if os.path.isfile(config_arg_file):
             with open(config_arg_file, "r") as config_file:
                 config = merge(yaml.safe_load(config_file), config)
-        elif config_arg_file == "config.yml":
-            logger.info(
-                f"Configuration not found, creating a base one: {config_arg_file}"
-            )
-            shutil.copy(config_default_file, config_arg_file)
         else:
-            raise Exception(
-                f"Config file {config_arg_file} not found; since this is potentially destructive, refusing to run. Create that file and try again."
+            logger.warn(
+                f"Configuration not found, creating a base one at {config_arg_file}"
             )
-            exit(1)
+            shutil.copy("config_override_base.yml", config_arg_file)
 
         logger.info(f"Configuration: {pprint.pformat(config)}")
         logging.getLogger().setLevel(config["logger"]["level"])
@@ -148,6 +148,8 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
 
             if args.action in ["clear-hashes"]:
                 checker.clear_hashes_cache()
+
+            replacer.print_and_delete_dry_run_change()
 
             if args.action in ["watch"]:
                 # Sleep so that the total time is interval-seconds

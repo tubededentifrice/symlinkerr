@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+test*.py
+ToDo
+.vscode
+snip*.py
