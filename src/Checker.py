@@ -136,11 +136,15 @@ class Checker:
             return hash_in_cache[0]
 
         # Get the hash an populate the cache
-        self.logger.info(f"Could not find the hash of {file.fullpath} in the cache, computing it, this will take a while")
+        self.logger.info(
+            f"Could not find the hash of {file.fullpath} in the cache, computing it, this will take a while"
+        )
         start_time = round(time.time())
         file_hash = self.compute_hash(file)
         end_time = round(time.time())
-        self.logger.info(f"Computing the hash of {file.fullpath} ({file_hash}) took {end_time - start_time} seconds")
+        self.logger.info(
+            f"Computing the hash of {file.fullpath} ({file_hash}) took {end_time - start_time} seconds"
+        )
 
         self.database.execute(
             "INSERT OR REPLACE INTO hashes(fullpath, hash, size, mtime) VALUES(?, ?, ?, ?)",
@@ -173,5 +177,5 @@ class Checker:
                 index += 1
                 if (index % print_progress_every) == 0:
                     print(f" {round(index / total_rounds * 100)}%", flush=True)
-        
+
         return m.hexdigest()
