@@ -24,6 +24,10 @@ class Replacer:
         self.add_suffix: str = config["add-suffix-instead-of-deleting"]
         self.suffix: str = config["suffix"]
 
+        self.chown_uid = config["chown-uid"]
+        self.chown_gid = config["chown-gid"]
+        self.chmod = config["chmod"]
+
         self.create_changelog_table()
 
     def clear_changelog(self) -> None:
@@ -105,6 +109,8 @@ class Replacer:
                 "CREATE_TEMP_SYMLINK_COMMIT",
             )
 
+            self.chown(self, temporary_file)
+
         if not self.wrap_interactive(
             f"Create symlink {temporary_file.fullpath} ==> {file_symlink_target.fullpath}?",
             create_symlink_tmp,
@@ -180,7 +186,6 @@ class Replacer:
 
         temporary_file = File(symlink_file.fullpath + self.temporary_suffix)
         if temporary_file.is_file():
-
             def remove_existing_tmp():
                 temporary_file.remove()
 
@@ -204,6 +209,8 @@ class Replacer:
                 symlink_file.get_readlink(),
                 "SYMLINK_COPY_CONTENT_COMMIT",
             )
+
+            self.chown(self, temporary_file)
 
         if not self.wrap_interactive(
             f"Copy the content of {symlink_file.fullpath} to {temporary_file.fullpath}?",
@@ -241,6 +248,10 @@ class Replacer:
             f"Move the temporary file {temporary_file.fullpath} to {symlink_file.fullpath}?",
             rename_tmp_to_final,
         )
+
+    def chown(self, file: File):
+        os.chown(file.fullpath, self.chown_uid, self.chown_gid)
+        os.chmod(file.fullpath, int(str(self.chmod), base=8))
 
     def wrap_interactive(self, question: str, callback) -> bool:
         if not self.interactive:

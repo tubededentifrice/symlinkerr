@@ -64,3 +64,9 @@ replacer:
   # Dry run will only log what it would have done, but won't do anything.
   # It will populate the hash cache though, so the next runs will be very fast.
   dry-run: true
+
+  # Permissions to set on files created
+  # 99 / 100 is good for Unraid (nobody/users), adjust to your own needs
+  chown-uid: 99
+  chown-gid: 100
+  chmod: 777

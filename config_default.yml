@@ -93,3 +93,9 @@ replacer:
   # To avoid infinite loop, files with this suffix will be ignored
   # Can be anything except ".tmp", which we use for intermediate operations
   suffix: ".bak"
+
+  # Permissions to set on files created
+  # 99 / 100 is good for Unraid (nobody/users), adjust to your own needs
+  chown-uid: 99
+  chown-gid: 100
+  chmod: 777
