@@ -186,6 +186,7 @@ class Replacer:
 
         temporary_file = File(symlink_file.fullpath + self.temporary_suffix)
         if temporary_file.is_file():
+
             def remove_existing_tmp():
                 temporary_file.remove()
 
