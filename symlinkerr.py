@@ -151,18 +151,19 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
 
             replacer.print_and_delete_dry_run_change()
 
-            if args.action in ["watch"]:
-                # Sleep so that the total time is interval-seconds
-                interval_duration = config["watcher"]["interval-seconds"]
-                run_duration = round(time.time()) - start_time
-                sleep_duration = interval_duration - run_duration
-                if sleep_duration <= 0:
-                    sleep_duration = interval_duration
+        # Release the sqlite connection while we sleep
+        if args.action in ["watch"]:
+            # Sleep so that the total time is interval-seconds
+            interval_duration = config["watcher"]["interval-seconds"]
+            run_duration = round(time.time()) - start_time
+            sleep_duration = interval_duration - run_duration
+            if sleep_duration <= 0:
+                sleep_duration = interval_duration
 
-                logger.info(f"Sleeping for {sleep_duration} seconds...")
-                time.sleep(sleep_duration)
-            else:
-                return 0
+            logger.info(f"Sleeping for {sleep_duration} seconds...")
+            time.sleep(sleep_duration)
+        else:
+            return 0
 
 
 if __name__ == "__main__":

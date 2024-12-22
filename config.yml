@@ -5,13 +5,14 @@ watcher:
   interval-seconds: 3600
 
 finder:
-  followlinks: false
   find-candidates-by: "SIZE"
 
   directories:
     watch-directories:
       - dir: "/data/media/movies-tmp"
-      - dir: "/data/media/movies"
+      # - dir: "/data/media/movies"
+      - dir: "/data/media/tv-tmp"
+      # - dir: "/data/media/tv"
 
     symlink-target-directories:
       - dir: "/mnt/remotes/rclone/zurg/__downloads__"
@@ -19,12 +20,11 @@ finder:
       - dir: "/mnt/remotes/rclone/zurg/__all__"
         priority: 2
 
-    undo-all-symlinks-directories: []
-      # - dir: "/data/media/movies-backupthis"
-      # - dir: "/data/media/tv-backupthis"
+    undo-all-symlinks-directories: # []
+      - dir: "/data/media/movies-backupthis"
+      - dir: "/data/media/tv-backupthis"
 
 checker:
-  files-min-age-seconds: 0
   change-in-mtime-invalidates-hash: false
 
 replacer:

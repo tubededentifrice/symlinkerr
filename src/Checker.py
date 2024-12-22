@@ -156,8 +156,12 @@ class Checker:
         #     return hashlib.file_digest(f, "sha256").hexdigest()
 
         blocksize = 2**20
+        total_rounds = file.get_size() / blocksize
+        print_progress_every = round(total_rounds / 10)
+
         m = hashlib.md5()
         with open(file.fullpath, "rb") as f:
+            index: int = 0
             while True:
                 buf = f.read(blocksize)
                 if not buf:
@@ -165,4 +169,9 @@ class Checker:
                     break
                 m.update(buf)
                 print(".", end="", flush=True)
+
+                index += 1
+                if (index % print_progress_every) == 0:
+                    print(f" {round(index / total_rounds * 100)}%", flush=True)
+        
         return m.hexdigest()

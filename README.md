@@ -62,7 +62,8 @@ Those can/should be overriden in your own config.yml -- your values will take ov
 
 ## Run
 
-The default config -- `config_default.yml` -- is using those directories, you will need to change that to suit your own needs
+The default config -- `config_default.yml` -- is using those directories, you will need to change that to suit your own needs.
+Duplicate that file onto `config.yml` and make your changes.
 ```
 finder:
   directories:
@@ -93,14 +94,16 @@ finder:
 
 Docker is the recommended way to go. Mount a persistent storage at /config (where your config and database will be stored).
 Mount the directories you want to watch/rewrite and the symlink target.
+The app will be in /app and you can run command manually from there. The entrypoint is the watcher, so it will be running in a loop.
+Config is reloaded at each run, without restarting the container.
 
 **It's very important the symlink target paths are the same accross all your containers, and even host!**
 If not, you'll end with dead symlinks. The target of the symlinks also needs to be mounted on all containers that needs to access the content of the files.
 
 ### Bare metal
 
-The default config file will be location in the current directory, as `config.yml`. If the file doesn't exist, the first run will create it. Or do it yourself by copying `config_default.yml` and changing settings beforehand.
-The default config runs in a `dry-run`, so won't actually be doing anything, but put the database in `/config/symlinkerr.sqlite`, so you'll most probably want to change that.
+The default config file will be `config.yml` in the current directory (override with `-c /path/to/config.yml`). If the file doesn't exist, the first run will create it. Or do it yourself by copying `config_default.yml` and changing settings beforehand.
+The default config runs in a `dry-run`, so won't actually be doing anything, and put the database in `/config/symlinkerr.sqlite`, so you'll most probably want to change that as well.
 
 ## Contributing
 

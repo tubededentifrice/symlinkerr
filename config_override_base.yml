@@ -17,10 +17,12 @@ finder:
 
     # Directories where we will try to find replacements
     # Only files with the exact same size will be eligible.
-    # After finding a candidate, the hash of both files will be computed to ensure they are indeed identical (and accessible!)
-    # In case the file is found in multiple targets, the top priority will be used (ie. the lowest)
+    # After finding a candidate, the hash of both files will be computed to ensure they
+    # are indeed identical (and accessible!)
+    # If multiple candidates are found, the top priority will be used (ie. the lowest)
     # If there is still multiple matching candidates, a random one will be chosen
-    # It is VERY important those paths are mounted to the same places everywhere (host, containers, etc.), otherwise they won't resolve properly accross apps
+    # It is VERY important those paths are mounted to the same places everywhere
+    # (host, containers, etc.), otherwise they won't resolve properly accross apps
     symlink-target-directories:
       - dir: "/mnt/remotes/rclone/zurg/__downloads__"
         priority: 1
@@ -29,7 +31,8 @@ finder:
 
     # Symlinks in this folder will be replaced by the content at the target of the symlink
     # Eg. this is the things you actually want to store locally, if you are happy with the content
-    # Must obviously NOT be with the watch-directories, otherwise it will replace with a symlink, then replace that symlink with content, etc.
+    # Must obviously NOT be with the watch-directories, otherwise it will replace with a symlink,
+    # then replace that symlink with content, etc.
     undo-all-symlinks-directories:
       - dir: "/data/media/movies-i-like"
 
@@ -41,10 +44,12 @@ checker:
   files-min-size-bytes: 52428800
 
   # Checks that the hash of both files are the same (and that they are indeed readable)
-  # Should always be true, unless find-candidates-by is FILENAME and you have reencoded the original files, so they are actually different on disk
+  # Should always be true, unless find-candidates-by is FILENAME and you have reencoded
+  # the original files, so they are actually different on disk
   check-hash: true
 
-  # Can be set to false if your files aren't supposed to change but are still pushing fake modification times to the filesystem
+  # Can be set to false if your files aren't supposed to change but are still pushing
+  # fake modification times to the filesystem
   change-in-mtime-invalidates-hash: true
 
   # Files and folders that shouldn't be visible to the indexer
