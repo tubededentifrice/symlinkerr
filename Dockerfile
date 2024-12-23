@@ -10,7 +10,7 @@ ENV SHORT_COMMIT_ID=$SHORT_COMMIT_ID
 
 LABEL org.opencontainers.image.source="https://github.com/tubededentifrice/symlinkerr"
                                                       
-ENV IS_IN_DOCKER 1
+ENV IS_IN_DOCKER=1
 
 WORKDIR /app
 
