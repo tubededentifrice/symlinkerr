@@ -23,7 +23,6 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL")
 INTERVAL_SECONDS = os.environ.get("INTERVAL")
 DRY_RUN = os.environ.get("DRY_RUN")
 
-
 def merge(source, destination):
     if source is not None:
         for key, value in source.items():
@@ -87,6 +86,11 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         format="%(asctime)s %(levelname)s - %(module)s - %(message)s",
     )
     logger = logging.getLogger("symlinkerr")
+
+    logger.info("#" * 50)
+    logger.info("Symlinkerr -- started")
+    logger.info("Source code available at https://github.com/tubededentifrice/symlinkerr")   
+    logger.info("")
 
     logger.info(f"Running with parameters: {vars(args)}")
 
