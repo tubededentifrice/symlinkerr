@@ -277,11 +277,11 @@ class Replacer:
         if self.dry_run:
             changes = self.get_and_delete_dry_run_change()
             if len(changes) > 0:
-                print("** Changes that would have been performed without the dry-run: **")
+                self.logger.warn("** Changes that would have been performed without the dry-run: **")
                 for change in self.get_and_delete_dry_run_change():
-                    print("    " + change)
+                    self.logger.warn("    " + change)
             else:
-                print("** No change would have been performed without the dry-run **")
+                self.logger.warn("** No change would have been performed without the dry-run **")
 
     def get_and_delete_dry_run_change(self) -> list[str]:
         changes = self.dry_run_changes
