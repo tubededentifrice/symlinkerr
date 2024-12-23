@@ -143,7 +143,8 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             )
 
             if DRY_RUN is not None:
-                replacer.dry_run = DRY_RUN
+                # Anything but exactly "false" will be interpreted as a dry run
+                replacer.dry_run = not (DRY_RUN.lower() == "false")
 
             if args.action in [
                 "watch",
