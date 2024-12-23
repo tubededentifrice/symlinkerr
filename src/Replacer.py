@@ -109,7 +109,7 @@ class Replacer:
                 "CREATE_TEMP_SYMLINK_COMMIT",
             )
 
-            self.chown(self, temporary_file)
+            self.chown(temporary_file)
 
         if not self.wrap_interactive(
             f"Create symlink {temporary_file.fullpath} ==> {file_symlink_target.fullpath}?",
@@ -211,7 +211,7 @@ class Replacer:
                 "SYMLINK_COPY_CONTENT_COMMIT",
             )
 
-            self.chown(self, temporary_file)
+            self.chown(temporary_file)
 
         if not self.wrap_interactive(
             f"Copy the content of {symlink_file.fullpath} to {temporary_file.fullpath}?",
