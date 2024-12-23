@@ -1,4 +1,4 @@
-FROM python:3.10.13-slim
+FROM python:latest
 
 # Define a build-time argument for IMAGE_TAG
 ARG IMAGE_TAG
@@ -14,8 +14,8 @@ ENV IS_IN_DOCKER 1
 
 WORKDIR /app
 
-COPY ./docker/requirements.txt ./docker/requirements.txt
-RUN pip install --no-cache-dir -r docker/requirements.txt
+# COPY ./docker/requirements.txt ./docker/requirements.txt
+# RUN pip install --no-cache-dir -r docker/requirements.txt
 COPY . .
 
-CMD ["python", "symlinkerr.py"]
+ENTRYPOINT ["python3", "symlinkerr.py", "watch"]

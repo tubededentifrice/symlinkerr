@@ -52,7 +52,7 @@ Very minimal dependencies are required except for a recent version of Python (3.
 
 Install them on Debian/Ubuntu with:
 ```
-apt update && apt install python3 python3-yaml
+apt update && apt install -y python3 python3-yaml
 ```
 
 ## Configuration
