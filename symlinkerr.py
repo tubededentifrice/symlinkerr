@@ -23,9 +23,6 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL")
 INTERVAL_SECONDS = os.environ.get("INTERVAL")
 DRY_RUN = os.environ.get("DRY_RUN")
 
-
-
-
 def merge(source, destination):
     if source is not None:
         for key, value in source.items():
