@@ -12,8 +12,8 @@ logger:
 finder:
   directories:
     # Directories where we will delete files and replace them with symlinks
-    watch-directories:
-      - dir: "/data/media/movies"
+    watch-directories: []
+      # - dir: "/data/media/movies"
 
     # Directories where we will try to find replacements
     # Only files with the exact same size will be eligible.
@@ -23,18 +23,18 @@ finder:
     # If there is still multiple matching candidates, a random one will be chosen
     # It is VERY important those paths are mounted to the same places everywhere
     # (host, containers, etc.), otherwise they won't resolve properly accross apps
-    symlink-target-directories:
-      - dir: "/mnt/remotes/rclone/zurg/__downloads__"
-        priority: 1
-      - dir: "/mnt/remotes/rclone/zurg/__all__"
-        priority: 2
+    symlink-target-directories: []
+      # - dir: "/mnt/remotes/rclone/zurg/__downloads__"
+      #   priority: 1
+      # - dir: "/mnt/remotes/rclone/zurg/__all__"
+      #   priority: 2
 
     # Symlinks in this folder will be replaced by the content at the target of the symlink
     # Eg. this is the things you actually want to store locally, if you are happy with the content
     # Must obviously NOT be with the watch-directories, otherwise it will replace with a symlink,
     # then replace that symlink with content, etc.
-    undo-all-symlinks-directories:
-      - dir: "/data/media/movies-i-like"
+    undo-all-symlinks-directories: []
+      # - dir: "/data/media/movies-i-like"
 
 checker:
   # How long to wait after the file has been last modified to replace it
