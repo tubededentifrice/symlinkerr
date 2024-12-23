@@ -17,6 +17,12 @@ from src.Indexer import Indexer
 from src.Replacer import Replacer
 
 IS_IN_DOCKER = os.environ.get("IS_IN_DOCKER")
+CONFIG_FILE = os.environ.get("CONFIG_FILE")
+DATABASE_FILE = os.environ.get("DATABASE_FILE")
+LOG_LEVEL = os.environ.get("LOG_LEVEL")
+INTERVAL_SECONDS = os.environ.get("INTERVAL")
+DRY_RUN = os.environ.get("DRY_RUN")
+
 
 def merge(source, destination):
     if source is not None:
@@ -40,6 +46,8 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
     default_config_path = "config.yml"
     if IS_IN_DOCKER:
         default_config_path = "/config/" + default_config_path
+    if CONFIG_FILE:
+        default_config_path = CONFIG_FILE
 
     parser.add_argument(
         "-c",
@@ -75,7 +83,7 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
     args = parser.parse_args()
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=LOG_LEVEL or logging.DEBUG,
         format="%(asctime)s %(levelname)s - %(module)s - %(message)s",
     )
     logger = logging.getLogger("symlinkerr")
@@ -102,9 +110,9 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
             shutil.copy("config_override_base.yml", config_arg_file)
 
         logger.info(f"Configuration: {pprint.pformat(config)}")
-        logging.getLogger().setLevel(config["logger"]["level"])
+        logging.getLogger().setLevel(LOG_LEVEL or config["logger"]["level"])
 
-        with sqlite3.connect(config["database"]) as database:
+        with sqlite3.connect(DATABASE_FILE or config["database"]) as database:
             indexer = Indexer(
                 config=config["indexer"],
                 target_directories=config["finder"]["directories"][
@@ -130,6 +138,9 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
                 replacer=replacer,
             )
 
+            if DRY_RUN is not None:
+                replacer.dry_run = DRY_RUN
+
             if args.action in [
                 "watch",
                 "replace-with-symlinks",
@@ -154,7 +165,7 @@ WARNING: THIS THING IS DESTRUCTIVE! It will delete stuff and replace them with s
         # Release the sqlite connection while we sleep
         if args.action in ["watch"]:
             # Sleep so that the total time is interval-seconds
-            interval_duration = config["watcher"]["interval-seconds"]
+            interval_duration = INTERVAL_SECONDS or config["watcher"]["interval-seconds"]
             run_duration = round(time.time()) - start_time
             sleep_duration = interval_duration - run_duration
             if sleep_duration <= 0:
