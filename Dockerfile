@@ -18,4 +18,5 @@ COPY . .
 RUN apt update && apt install -y python3-yaml
 RUN pip install --no-cache-dir -r requirements.txt
 
+STOPSIGNAL SIGINT
 ENTRYPOINT ["python3", "symlinkerr.py", "watch"]
