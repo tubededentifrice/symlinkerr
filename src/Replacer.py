@@ -86,6 +86,7 @@ class Replacer:
         if temporary_file.is_file():
 
             def remove_existing_tmp():
+                self.logger.debug(f"Removing existing temporary file {temporary_file.fullpath}")
                 temporary_file.remove()
 
             if not self.wrap_interactive(
@@ -101,6 +102,7 @@ class Replacer:
                 file_symlink_target.fullpath,
                 "CREATE_TEMP_SYMLINK_START",
             )
+            self.logger.debug(f"Making symlink in temporary location {temporary_file.fullpath} ==> {file_symlink_target.fullpath}")
             os.symlink(file_symlink_target.fullpath, temporary_file.fullpath)
             self.log_change(
                 file.fullpath,
@@ -109,6 +111,7 @@ class Replacer:
                 "CREATE_TEMP_SYMLINK_COMMIT",
             )
 
+            self.logger.debug(f"Changing permissions on {temporary_file.fullpath}")
             self.chown(temporary_file)
 
         if not self.wrap_interactive(
@@ -136,6 +139,7 @@ class Replacer:
                     file_symlink_target.fullpath,
                     "ADD_SUFFIX_START",
                 )
+                self.logger.debug(f"Rename existing file {file.fullpath} to {rename_existing_to}")
                 shutil.move(file.fullpath, rename_existing_to)
                 self.log_change(
                     file.fullpath,
@@ -157,6 +161,7 @@ class Replacer:
                 file_symlink_target.fullpath,
                 "MOVE_SYMLINK_START",
             )
+            self.logger.debug(f"Rename symlink {temporary_file.fullpath} to {file.fullpath}")
             shutil.move(temporary_file.fullpath, file.fullpath)
             self.log_change(
                 file.fullpath,
@@ -188,6 +193,7 @@ class Replacer:
         if temporary_file.is_file():
 
             def remove_existing_tmp():
+                self.logger.debug(f"Removing existing temporary file {temporary_file.fullpath}")
                 temporary_file.remove()
 
             if not self.wrap_interactive(
@@ -203,6 +209,7 @@ class Replacer:
                 symlink_file.get_readlink(),
                 "SYMLINK_COPY_CONTENT_START",
             )
+            self.logger.debug(f"Copying content from {symlink_file.fullpath} to {temporary_file.fullpath}")
             shutil.copy(symlink_file.fullpath, temporary_file.fullpath)
             self.log_change(
                 symlink_file.fullpath,
@@ -237,6 +244,7 @@ class Replacer:
                 symlink_file.fullpath,
                 "SYMLINK_CONTENT_RENAME_START",
             )
+            self.logger.debug(f"Rename {temporary_file.fullpath} to {symlink_file.fullpath}")
             shutil.move(temporary_file.fullpath, symlink_file.fullpath)
             self.log_change(
                 symlink_file.fullpath,
