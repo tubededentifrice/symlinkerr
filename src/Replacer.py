@@ -259,8 +259,11 @@ class Replacer:
         )
 
     def chown(self, file: File):
-        os.chown(file.fullpath, self.chown_uid, self.chown_gid)
-        os.chmod(file.fullpath, int(str(self.chmod), base=8))
+        try:
+            os.chown(file.fullpath, self.chown_uid, self.chown_gid, follow_symlinks=False)
+            os.chmod(file.fullpath, int(str(self.chmod), base=8), follow_symlinks=False)
+        except Exception as e:
+            self.logger.error(f"An error occured while changing permissions on {file.fullpath}, but ignoring it: {e}")
 
     def wrap_interactive(self, question: str, callback) -> bool:
         if not self.interactive:

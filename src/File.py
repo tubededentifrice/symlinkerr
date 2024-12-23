@@ -30,6 +30,9 @@ class File:
             self.__readlink = os.readlink(self.fullpath)
         return self.__readlink
 
+    def is_link(self) -> bool:
+        return os.path.islink(self.fullpath)
+
     def is_file(self) -> bool:
         return os.path.isfile(self.fullpath)
 
