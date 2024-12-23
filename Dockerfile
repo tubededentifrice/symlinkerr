@@ -14,8 +14,7 @@ ENV IS_IN_DOCKER=1
 
 WORKDIR /app
 
-# COPY ./docker/requirements.txt ./docker/requirements.txt
-# RUN pip install --no-cache-dir -r docker/requirements.txt
 COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
 
 ENTRYPOINT ["python3", "symlinkerr.py", "watch"]
