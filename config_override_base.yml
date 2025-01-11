@@ -69,4 +69,4 @@ replacer:
   # 99 / 100 is good for Unraid (nobody/users), adjust to your own needs
   chown-uid: 99
   chown-gid: 100
-  chmod: 777
+  chmod: 664
